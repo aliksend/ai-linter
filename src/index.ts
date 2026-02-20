@@ -6,7 +6,7 @@ import { executeFirstPass } from "./passes/first-pass.js";
 import { executeSecondPass } from "./passes/second-pass.js";
 import { generateReport } from "./report.js";
 import type { Config, RawIssue, VerifiedIssue } from "./types.js";
-import { createAgent } from "./agents.js";
+import { createAgent, AGENT_TYPES } from "./agents.js";
 import type { AgentType } from "./agents.js";
 
 async function runWithConcurrency<T, R>(
@@ -36,10 +36,10 @@ const program = new Command();
 
 program
   .name("ai-linter")
-  .description("AI-powered code linter using Claude")
+  .description("AI-powered code linter")
   .version("0.1.0")
   .argument("[path]", "Project root to check", ".")
-  .option("-c, --concurrency <n>", "Max parallel Claude sessions", "5")
+  .option("-c, --concurrency <n>", "Max parallel agent sessions", "5")
   .option("--model-fast <model>", "Model for first pass", "haiku")
   .option("--model-review <model>", "Model for second pass", "sonnet")
   .option("--agent <type>", "AI agent to use: claude or qwen", "claude")
@@ -53,8 +53,8 @@ program
     }
 
     const agentType = opts.agent as string;
-    if (agentType !== "claude" && agentType !== "qwen") {
-      console.error(`Error: --agent must be "claude" or "qwen", got: ${agentType}`);
+    if (!(AGENT_TYPES as readonly string[]).includes(agentType)) {
+      console.error(`Error: --agent must be one of: ${AGENT_TYPES.join(", ")}, got: ${agentType}`);
       process.exit(2);
     }
 

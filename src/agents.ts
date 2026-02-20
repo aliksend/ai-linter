@@ -7,7 +7,8 @@ export interface AgentAdapter {
   parseResponse(stdout: string): unknown;
 }
 
-export type AgentType = "claude" | "qwen";
+export const AGENT_TYPES = ["claude", "qwen"] as const;
+export type AgentType = typeof AGENT_TYPES[number];
 
 function stripCodeFences(text: string): string {
   return text

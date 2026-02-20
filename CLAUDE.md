@@ -54,7 +54,7 @@ src/
 - `RawIssue` — potential issue from first pass (file, line, severity, rule, description)
 - `FirstPassResult` — RuleFile + its RawIssue[]
 - `VerifiedIssue` — confirmed issue from second pass (adds `explanation`, drops `description`)
-- `Config` — CLI options (projectPath, concurrency, modelFast, modelReview, outputPath, verbose)
+- `Config` — CLI options (projectPath, concurrency, modelFast, modelReview, outputPath, verbose, agent)
 
 ## Exit Codes
 
