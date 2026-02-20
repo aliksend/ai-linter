@@ -6,7 +6,8 @@ import { executeFirstPass } from "./passes/first-pass.js";
 import { executeSecondPass } from "./passes/second-pass.js";
 import { generateReport } from "./report.js";
 import type { Config, RawIssue, VerifiedIssue } from "./types.js";
-import { ClaudeAgent } from "./agents.js";
+import { createAgent } from "./agents.js";
+import type { AgentType } from "./agents.js";
 
 async function runWithConcurrency<T, R>(
   items: T[],
@@ -41,12 +42,19 @@ program
   .option("-c, --concurrency <n>", "Max parallel Claude sessions", "5")
   .option("--model-fast <model>", "Model for first pass", "haiku")
   .option("--model-review <model>", "Model for second pass", "sonnet")
+  .option("--agent <type>", "AI agent to use: claude or qwen", "claude")
   .option("-o, --output <path>", "Output report path", "ai-linter-report.md")
   .option("-v, --verbose", "Verbose output", false)
   .action(async (pathArg: string, opts) => {
     const concurrency = parseInt(opts.concurrency, 10);
     if (!Number.isFinite(concurrency) || concurrency < 1) {
       console.error(`Error: --concurrency must be a positive integer, got: ${opts.concurrency}`);
+      process.exit(2);
+    }
+
+    const agentType = opts.agent as string;
+    if (agentType !== "claude" && agentType !== "qwen") {
+      console.error(`Error: --agent must be "claude" or "qwen", got: ${agentType}`);
       process.exit(2);
     }
 
@@ -57,7 +65,7 @@ program
       modelReview: opts.modelReview,
       outputPath: resolve(opts.output),
       verbose: opts.verbose,
-      agent: new ClaudeAgent(),
+      agent: createAgent(agentType as AgentType),
     };
 
     try {
