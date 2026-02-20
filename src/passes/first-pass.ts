@@ -11,13 +11,14 @@ export function buildFirstPassPrompt(rulesContent: string): string {
   return `You are an AI linter. Your task is to check the code in the current directory against the rules described below.
 Rules that have "Must" or "Have to" in it considered mandatory.
 Rules with "Should" are recommendations.
+If you are unsure whether it is a violation or not, report it as a violation.
 
 RULES:
 ---
 ${rulesContent}
 ---
 
-Instructions:
+**Instructions**:
 1. Examine files in the current directory and subdirectories
 2. Check the code against each rule
 3. For each violation, determine the severity:
@@ -59,6 +60,7 @@ export async function executeFirstPass(ruleFile: RuleFile, config: Config): Prom
     ruleFile.dir,
     FirstPassResponseSchema,
     config.verbose,
+    config.maxRetries,
   );
   return { ruleFile, issues: response.issues };
 }

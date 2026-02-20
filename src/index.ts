@@ -5,7 +5,7 @@ import { scanForRuleFiles } from "./scanner.js";
 import { executeFirstPass } from "./passes/first-pass.js";
 import { executeSecondPass } from "./passes/second-pass.js";
 import { generateReport } from "./report.js";
-import { AGENT_TYPES, AgentType, Config, type RawIssue, type VerifiedIssue } from "./types.js";
+import { AGENT_TYPES, AgentType, Config, RuleFile, type RawIssue, type VerifiedIssue } from "./types.js";
 import type { AgentAdapter } from "./agents.js";
 import { ClaudeAgent } from "./agents/claude.js";
 import { QwenAgent } from "./agents/qwen.js";
@@ -43,6 +43,7 @@ program
   .version("0.1.0")
   .argument("[path]", "Project root to check", ".")
   .option("-c, --concurrency <n>", "Max parallel agent sessions", "5")
+  .option("-r, --retries <n>", "Max retries", "5")
   .option("--model-fast <model>", "Model for first pass")
   .option("--model-review <model>", "Model for second pass")
   .option("--agent <type>", "AI agent to use: claude or qwen", "claude")
@@ -52,6 +53,12 @@ program
     const concurrency = parseInt(opts.concurrency, 10);
     if (!Number.isFinite(concurrency) || concurrency < 1) {
       console.error(`Error: --concurrency must be a positive integer, got: ${opts.concurrency}`);
+      process.exit(2);
+    }
+
+    const maxRetries = parseInt(opts.retries, 10);
+    if (!Number.isFinite(maxRetries) || maxRetries < 1) {
+      console.error(`Error: --retries must be a positive integer, got: ${opts.retries}`);
       process.exit(2);
     }
 
@@ -66,6 +73,7 @@ program
     const config = Config.parse({
       projectPath: resolve(pathArg),
       concurrency,
+      maxRetries,
       modelFast: opts.modelFast ?? agent.defaultFastModel,
       modelReview: opts.modelReview ?? agent.defaultReviewModel,
       outputPath: resolve(opts.output),
@@ -91,10 +99,10 @@ program
         return executeFirstPass(rf, config);
       });
 
-      const allRawIssues: { issue: RawIssue; cwd: string }[] = [];
+      const allRawIssues: { issue: RawIssue; rf: RuleFile }[] = [];
       for (const result of firstPassResults) {
         for (const issue of result.issues) {
-          allRawIssues.push({ issue, cwd: result.ruleFile.dir });
+          allRawIssues.push({ issue, rf: result.ruleFile });
         }
       }
 
@@ -112,9 +120,9 @@ program
       console.log("Starting second pass (verification)...");
       const verifiedIssues: VerifiedIssue[] = [];
 
-      const secondPassResults = await runWithConcurrency(allRawIssues, config.concurrency, async ({ issue, cwd }) => {
-        console.log(`  Verifying: ${issue.file}:${issue.line}`);
-        return executeSecondPass(issue, cwd, config);
+      const secondPassResults = await runWithConcurrency(allRawIssues, config.concurrency, async ({ issue, rf }) => {
+        console.log(`  Verifying [${issue.rule}]: ${issue.file}:${issue.line}`);
+        return executeSecondPass(rf, issue, config);
       });
 
       for (const result of secondPassResults) {

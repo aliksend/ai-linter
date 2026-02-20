@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { VerifiedIssue } from "../types.js";
-import type { RawIssue, Config } from "../types.js";
+import type { RawIssue, Config, RuleFile } from "../types.js";
 import { runAgentWithRetry } from "../runner.js";
 
 const SecondPassResponseSchema = z.discriminatedUnion("confirmed", [
@@ -8,20 +8,28 @@ const SecondPassResponseSchema = z.discriminatedUnion("confirmed", [
   z.object({ confirmed: z.literal(false) }),
 ]);
 
-export function buildSecondPassPrompt(issue: RawIssue): string {
-  return `You are an experienced code reviewer. Verify whether this is actually a rule violation.
+export function buildSecondPassPrompt(issue: RawIssue, rulesContent: string): string {
+  return `You are an experienced code reviewer. Your task is to verify the rule violation found in the code.
 
-RULE: ${issue.rule}
 FILE: ${issue.file}
 LINE(S): ${issue.line}
-PROBLEM DESCRIPTION: ${issue.description}
+VIOLATED RULE: ${issue.rule}
+VIOLATION DESCRIPTION: ${issue.description}
 
-Instructions:
+Rules that have "Must" or "Have to" in it considered mandatory.
+Rules with "Should" are recommendations.
+
+RULES:
+---
+${rulesContent}
+---
+
+**Instructions**:
 1. Read the specified file
-2. Analyze whether the described problem actually exists
+2. Analyze whether the described violation actually exists
 
 Return ONLY valid JSON:
-If the problem is confirmed:
+If the violation is confirmed:
 \`\`\`json
 {
   "confirmed": true,
@@ -29,7 +37,7 @@ If the problem is confirmed:
   "file": "path/to/file.ts",
   "line": "42",
   "rule": "rule name",
-  "explanation": "detailed explanation of the problem and how to fix it (2-3 sentences)"
+  "explanation": "detailed explanation of the violation and how to fix it (2-3 sentences)"
 }
 \`\`\`
 
@@ -41,15 +49,20 @@ If false positive:
 The "line" field can be a single line ("42") or a range ("20-45").`;
 }
 
-export async function executeSecondPass(issue: RawIssue, cwd: string, config: Config): Promise<VerifiedIssue | null> {
-  const prompt = buildSecondPassPrompt(issue);
+export async function executeSecondPass(
+  ruleFile: RuleFile,
+  issue: RawIssue,
+  config: Config,
+): Promise<VerifiedIssue | null> {
+  const prompt = buildSecondPassPrompt(issue, ruleFile.content);
   const response = await runAgentWithRetry(
     config.agent,
     prompt,
     config.modelReview,
-    cwd,
+    ruleFile.dir,
     SecondPassResponseSchema,
     config.verbose,
+    config.maxRetries,
   );
   return response.confirmed ? response : null;
 }

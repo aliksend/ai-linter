@@ -80,7 +80,7 @@ export async function runAgentWithRetry<T>(
   cwd: string,
   schema: z.ZodType<T>,
   verbose: boolean,
-  maxRetries = 3,
+  maxRetries: number,
   executor: (
     agent: AgentAdapter,
     prompt: string,
@@ -96,6 +96,7 @@ export async function runAgentWithRetry<T>(
       const result = schema.parse(response);
       return result;
     } catch (err) {
+      console.log(`    Call to agent failed. Retrying... (${attempt + 1}/${maxRetries})`);
       errors.push(err);
     }
   }
