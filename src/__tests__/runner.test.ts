@@ -23,6 +23,22 @@ describe("parseClaudeResponse", () => {
     });
   });
 
+  it("parses JSON wrapped in markdown code fences", () => {
+    const output = JSON.stringify({
+      result: '```json\n{"issues": []}\n```',
+    });
+    const result = parseClaudeResponse(output);
+    expect(result).toEqual({ issues: [] });
+  });
+
+  it("parses JSON wrapped in plain code fences", () => {
+    const output = JSON.stringify({
+      result: '```\n{"issues": []}\n```',
+    });
+    const result = parseClaudeResponse(output);
+    expect(result).toEqual({ issues: [] });
+  });
+
   it("throws on invalid JSON", () => {
     expect(() => parseClaudeResponse("not json")).toThrow();
   });
