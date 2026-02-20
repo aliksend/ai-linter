@@ -90,4 +90,11 @@ describe("runClaudeWithRetry", () => {
     await expect(runClaudeWithRetry("prompt", "model", "/cwd", schema, 1, executor))
       .rejects.toThrow("value");
   });
+
+  it("propagates executor errors immediately without retrying", async () => {
+    const executor = vi.fn().mockRejectedValue(new Error("spawn failed"));
+    await expect(runClaudeWithRetry("prompt", "model", "/cwd", schema, 3, executor))
+      .rejects.toThrow("spawn failed");
+    expect(executor).toHaveBeenCalledTimes(1);
+  });
 });
