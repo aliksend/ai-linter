@@ -6,6 +6,7 @@ import { executeFirstPass } from "./passes/first-pass.js";
 import { executeSecondPass } from "./passes/second-pass.js";
 import { generateReport } from "./report.js";
 import type { Config, RawIssue, VerifiedIssue } from "./types.js";
+import { ClaudeAgent } from "./agents.js";
 
 async function runWithConcurrency<T, R>(
   items: T[],
@@ -56,6 +57,7 @@ program
       modelReview: opts.modelReview,
       outputPath: resolve(opts.output),
       verbose: opts.verbose,
+      agent: new ClaudeAgent(),
     };
 
     try {

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { RawIssue } from "../types.js";
 import type { RuleFile, FirstPassResult, Config } from "../types.js";
-import { runClaudeWithRetry } from "../runner.js";
+import { runAgentWithRetry } from "../runner.js";
 
 const FirstPassResponseSchema = z.object({
   issues: z.array(RawIssue),
@@ -44,6 +44,6 @@ If there are no violations, return: {"issues": []}`;
 
 export async function executeFirstPass(ruleFile: RuleFile, config: Config): Promise<FirstPassResult> {
   const prompt = buildFirstPassPrompt(ruleFile.content);
-  const response = await runClaudeWithRetry(prompt, config.modelFast, ruleFile.dir, FirstPassResponseSchema);
+  const response = await runAgentWithRetry(config.agent, prompt, config.modelFast, ruleFile.dir, FirstPassResponseSchema);
   return { ruleFile, issues: response.issues };
 }

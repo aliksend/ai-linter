@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { VerifiedIssue } from "../types.js";
 import type { RawIssue, Config } from "../types.js";
-import { runClaudeWithRetry } from "../runner.js";
+import { runAgentWithRetry } from "../runner.js";
 
 const SecondPassResponseSchema = z.discriminatedUnion("confirmed", [
   VerifiedIssue,
@@ -39,6 +39,6 @@ The "line" field can be a single line ("42") or a range ("20-45").`;
 
 export async function executeSecondPass(issue: RawIssue, cwd: string, config: Config): Promise<VerifiedIssue | null> {
   const prompt = buildSecondPassPrompt(issue);
-  const response = await runClaudeWithRetry(prompt, config.modelReview, cwd, SecondPassResponseSchema);
+  const response = await runAgentWithRetry(config.agent, prompt, config.modelReview, cwd, SecondPassResponseSchema);
   return response.confirmed ? response : null;
 }
