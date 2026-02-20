@@ -19,10 +19,9 @@ PROBLEM DESCRIPTION: ${issue.description}
 Instructions:
 1. Read the specified file
 2. Analyze whether the described problem actually exists
-3. If this is a false positive — return {"confirmed": false}
 
 Return ONLY valid JSON:
-- If the problem is confirmed:
+If the problem is confirmed:
 \`\`\`json
 {
   "confirmed": true,
@@ -33,7 +32,8 @@ Return ONLY valid JSON:
   "explanation": "detailed explanation of the problem and how to fix it (2-3 sentences)"
 }
 \`\`\`
-- If false positive:
+
+If false positive:
 \`\`\`json
 {"confirmed": false}
 \`\`\`

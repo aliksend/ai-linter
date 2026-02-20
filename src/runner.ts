@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { z, ZodError } from "zod";
 import type { AgentAdapter } from "./agents.js";
+import { inspect } from "util";
 
 export async function runAgent(
   agent: AgentAdapter,
@@ -88,15 +89,17 @@ export async function runAgentWithRetry<T>(
     verbose: boolean,
   ) => Promise<unknown> = runAgent,
 ): Promise<T> {
-  let lastError: ZodError | undefined;
+  const errors: any[] = [];
   for (let attempt = 0; attempt < maxRetries; attempt++) {
-    const response = await executor(agent, prompt, model, cwd, verbose);
-    const result = schema.safeParse(response);
-    if (result.success) return result.data;
-    lastError = result.error;
+    try {
+      const response = await executor(agent, prompt, model, cwd, verbose);
+      const result = schema.parse(response);
+      return result;
+    } catch (err) {
+      errors.push(err);
+    }
   }
   throw new Error(
-    `Agent returned invalid response after ${maxRetries} attempts.\n` +
-      `Zod error: ${JSON.stringify(lastError?.issues, null, 2)}`,
+    `Agent returned invalid response after ${maxRetries} attempts.\n` + `Errors: ${inspect(errors, undefined, 16)}`,
   );
 }

@@ -24,7 +24,7 @@ Instructions:
    - "error" — explicit violation of a prohibition or mandatory requirement
    - "warning" — violation of a recommendation or potential issue
 
-Return ONLY valid JSON (no markdown):
+Return ONLY valid JSON:
 \`\`\`json
 {
   "issues": [

@@ -47,12 +47,12 @@ describe("runAgentWithRetry", () => {
     );
   });
 
-  it("propagates executor errors immediately without retrying", async () => {
+  it("retries on executor errors", async () => {
     const agent = makeMockAgent();
     const executor = vi.fn().mockRejectedValue(new Error("spawn failed"));
     await expect(runAgentWithRetry(agent, "prompt", "model", "/cwd", schema, false, 3, executor)).rejects.toThrow(
       "spawn failed",
     );
-    expect(executor).toHaveBeenCalledTimes(1);
+    expect(executor).toHaveBeenCalledTimes(3);
   });
 });
