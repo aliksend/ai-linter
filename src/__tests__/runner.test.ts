@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { buildClaudeArgs, parseClaudeResponse } from "../runner.js";
+import { describe, it, expect, vi } from "vitest";
+import { z } from "zod";
+import { buildClaudeArgs, parseClaudeResponse, runClaudeWithRetry } from "../runner.js";
 
 describe("buildClaudeArgs", () => {
   it("builds correct args for claude -p", () => {
@@ -22,7 +23,7 @@ describe("parseClaudeResponse", () => {
       issues: [{ file: "a.ts", line: "1", severity: "error", rule: "no-foo", description: "bad" }],
     });
   });
-  
+
   it("parses JSON wrapped in markdown code fences", () => {
     const output = JSON.stringify({
       result: '```json\n{"issues": []}\n```',
@@ -30,7 +31,7 @@ describe("parseClaudeResponse", () => {
     const result = parseClaudeResponse(output);
     expect(result).toEqual({ issues: [] });
   });
-  
+
   it("parses JSON wrapped in markdown code fences with prefix", () => {
     const output = JSON.stringify({
       result: 'Based on my analysis of the code, here are the violations found:\n\n```json\n{"issues": []}\n```',
@@ -57,5 +58,36 @@ describe("parseClaudeResponse", () => {
     });
     const result = parseClaudeResponse(output);
     expect(result).toEqual({ issues: [] });
+  });
+});
+
+describe("runClaudeWithRetry", () => {
+  const schema = z.object({ value: z.string() });
+
+  it("returns parsed data when first attempt succeeds", async () => {
+    const executor = vi.fn().mockResolvedValueOnce({ value: "ok" });
+    const result = await runClaudeWithRetry("prompt", "model", "/cwd", schema, 3, executor);
+    expect(result).toEqual({ value: "ok" });
+  });
+
+  it("retries and succeeds on second attempt", async () => {
+    const executor = vi.fn()
+      .mockResolvedValueOnce({ wrong: "shape" })
+      .mockResolvedValueOnce({ value: "ok" });
+    const result = await runClaudeWithRetry("prompt", "model", "/cwd", schema, 3, executor);
+    expect(result).toEqual({ value: "ok" });
+    expect(executor).toHaveBeenCalledTimes(2);
+  });
+
+  it("throws after maxRetries failed attempts and includes Zod error", async () => {
+    const executor = vi.fn().mockResolvedValue({ wrong: "shape" });
+    await expect(runClaudeWithRetry("prompt", "model", "/cwd", schema, 3, executor))
+      .rejects.toThrow("Claude returned invalid response after 3 attempts");
+  });
+
+  it("throws error message containing Zod issue details", async () => {
+    const executor = vi.fn().mockResolvedValue({ wrong: "shape" });
+    await expect(runClaudeWithRetry("prompt", "model", "/cwd", schema, 1, executor))
+      .rejects.toThrow("value");
   });
 });

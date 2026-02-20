@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { z, ZodError } from "zod";
 
 export function buildClaudeArgs(prompt: string, model: string): string[] {
   return ["-p", prompt, "--model", model, "--output-format", "json"];
@@ -74,4 +75,25 @@ export async function runClaude(prompt: string, model: string, cwd: string): Pro
       reject(new Error(`Failed to spawn claude: ${err.message}`));
     });
   });
+}
+
+export async function runClaudeWithRetry<T>(
+  prompt: string,
+  model: string,
+  cwd: string,
+  schema: z.ZodType<T>,
+  maxRetries = 3,
+  executor: (prompt: string, model: string, cwd: string) => Promise<unknown> = runClaude,
+): Promise<T> {
+  let lastError: ZodError | undefined;
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const response = await executor(prompt, model, cwd);
+    const result = schema.safeParse(response);
+    if (result.success) return result.data;
+    lastError = result.error;
+  }
+  throw new Error(
+    `Claude returned invalid response after ${maxRetries} attempts.\n` +
+    `Zod error: ${JSON.stringify(lastError?.issues, null, 2)}`,
+  );
 }
