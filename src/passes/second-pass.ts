@@ -6,6 +6,7 @@ export function buildSecondPassPrompt(issue: RawIssue): string {
 
 ПРАВИЛО: ${issue.rule}
 ФАЙЛ: ${issue.file}
+СТРОКА(И): ${issue.line}
 ОПИСАНИЕ ПРОБЛЕМЫ: ${issue.description}
 
 Инструкции:
@@ -29,11 +30,22 @@ export function buildSecondPassPrompt(issue: RawIssue): string {
 Поле "line" может быть одной строкой ("42") или диапазоном ("20-45").`;
 }
 
+function isVerifiedIssue(obj: unknown): obj is VerifiedIssue {
+  if (typeof obj !== "object" || obj === null) return false;
+  const o = obj as Record<string, unknown>;
+  return (
+    o.confirmed === true &&
+    (o.severity === "error" || o.severity === "warning") &&
+    typeof o.file === "string" &&
+    typeof o.line === "string" &&
+    typeof o.rule === "string" &&
+    typeof o.explanation === "string"
+  );
+}
+
 export function parseSecondPassResponse(response: unknown): VerifiedIssue | null {
-  if (typeof response !== "object" || response === null) return null;
-  const obj = response as Record<string, unknown>;
-  if (obj.confirmed !== true) return null;
-  return response as VerifiedIssue;
+  if (!isVerifiedIssue(response)) return null;
+  return response;
 }
 
 export async function executeSecondPass(
