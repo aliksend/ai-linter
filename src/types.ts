@@ -29,12 +29,6 @@ export interface VerifiedIssue {
   explanation: string;
 }
 
-export interface RejectedIssue {
-  confirmed: false;
-}
-
-export type SecondPassResult = VerifiedIssue | RejectedIssue;
-
 export interface Config {
   projectPath: string;
   concurrency: number;
