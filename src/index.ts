@@ -43,9 +43,15 @@ program
   .option("-o, --output <path>", "Output report path", "ai-linter-report.md")
   .option("-v, --verbose", "Verbose output", false)
   .action(async (pathArg: string, opts) => {
+    const concurrency = parseInt(opts.concurrency, 10);
+    if (!Number.isFinite(concurrency) || concurrency < 1) {
+      console.error(`Error: --concurrency must be a positive integer, got: ${opts.concurrency}`);
+      process.exit(2);
+    }
+
     const config: Config = {
       projectPath: resolve(pathArg),
-      concurrency: parseInt(opts.concurrency, 10),
+      concurrency,
       modelFast: opts.modelFast,
       modelReview: opts.modelReview,
       outputPath: resolve(opts.output),
