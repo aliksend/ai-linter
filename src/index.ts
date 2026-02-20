@@ -87,7 +87,7 @@ program
 
       // Step 2: First pass — parallel scan
       const firstPassResults = await runWithConcurrency(ruleFiles, config.concurrency, async (rf) => {
-        if (config.verbose) console.log(`  Scanning: ${rf.dir}`);
+        console.log(`  Scanning: ${rf.dir}`);
         return executeFirstPass(rf, config);
       });
 
@@ -113,7 +113,7 @@ program
       const verifiedIssues: VerifiedIssue[] = [];
 
       const secondPassResults = await runWithConcurrency(allRawIssues, config.concurrency, async ({ issue, cwd }) => {
-        if (config.verbose) console.log(`  Verifying: ${issue.file}:${issue.line}`);
+        console.log(`  Verifying: ${issue.file}:${issue.line}`);
         return executeSecondPass(issue, cwd, config);
       });
 

@@ -7,6 +7,7 @@ export async function runAgent(
   prompt: string,
   model: string,
   cwd: string,
+  verbose: boolean,
 ): Promise<unknown> {
   const args = agent.buildArgs(prompt, model);
 
@@ -16,24 +17,52 @@ export async function runAgent(
       stdio: ["ignore", "pipe", "pipe"],
     });
 
+    if (verbose) {
+      console.log(`Starting agent ${agent.command} with ${JSON.stringify(args, null, 2)}`);
+    }
+
     let stdout = "";
     let stderr = "";
 
-    proc.stdout.on("data", (chunk: Buffer) => { stdout += chunk.toString(); });
-    proc.stderr.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
+    proc.stdout.on("data", (chunk: Buffer) => {
+      stdout += chunk.toString();
+    });
+    proc.stderr.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString();
+    });
 
     proc.on("close", (code: number | null) => {
+      if (verbose) {
+        console.log(`Agent finished with code ${code} and stdout:\n${stdout}`);
+      }
+
       if (code !== 0) {
         reject(new Error(`${agent.command} exited with code ${code ?? "null (signal)"}: ${stderr}`));
         return;
       }
+
+      let agentResponse: string;
       try {
-        resolve(agent.parseResponse(stdout));
+        agentResponse = agent.getJsonResponse(stdout);
       } catch (err) {
-        reject(new Error(
-          `Failed to parse ${agent.command} response: ${err instanceof Error ? err.message : err}\n` +
-          `Raw output:\n${stdout}`,
-        ));
+        reject(
+          new Error(
+            `Failed to get ${agent.command} response: ${err instanceof Error ? err.message : err}\n` +
+              `Raw output:\n${stdout}`,
+          ),
+        );
+        return;
+      }
+
+      try {
+        resolve(JSON.parse(agentResponse));
+      } catch (err) {
+        reject(
+          new Error(
+            `Failed to parse ${agent.command} response: ${err instanceof Error ? err.message : err}\n` +
+              `Agent response:\n${agentResponse}`,
+          ),
+        );
       }
     });
 
@@ -49,18 +78,25 @@ export async function runAgentWithRetry<T>(
   model: string,
   cwd: string,
   schema: z.ZodType<T>,
+  verbose: boolean,
   maxRetries = 3,
-  executor: (agent: AgentAdapter, prompt: string, model: string, cwd: string) => Promise<unknown> = runAgent,
+  executor: (
+    agent: AgentAdapter,
+    prompt: string,
+    model: string,
+    cwd: string,
+    verbose: boolean,
+  ) => Promise<unknown> = runAgent,
 ): Promise<T> {
   let lastError: ZodError | undefined;
   for (let attempt = 0; attempt < maxRetries; attempt++) {
-    const response = await executor(agent, prompt, model, cwd);
+    const response = await executor(agent, prompt, model, cwd, verbose);
     const result = schema.safeParse(response);
     if (result.success) return result.data;
     lastError = result.error;
   }
   throw new Error(
     `Agent returned invalid response after ${maxRetries} attempts.\n` +
-    `Zod error: ${JSON.stringify(lastError?.issues, null, 2)}`,
+      `Zod error: ${JSON.stringify(lastError?.issues, null, 2)}`,
   );
 }

@@ -9,7 +9,7 @@ function makeMockAgent(parseResult: unknown = {}): AgentAdapter {
     defaultFastModel: "fast",
     defaultReviewModel: "review",
     buildArgs: vi.fn().mockReturnValue([]),
-    parseResponse: vi.fn().mockReturnValue(parseResult),
+    getJsonResponse: vi.fn().mockReturnValue(parseResult),
   };
 }
 
@@ -19,14 +19,14 @@ describe("runAgentWithRetry", () => {
   it("returns parsed data when first attempt succeeds", async () => {
     const agent = makeMockAgent();
     const executor = vi.fn().mockResolvedValueOnce({ value: "ok" });
-    const result = await runAgentWithRetry(agent, "prompt", "model", "/cwd", schema, 3, executor);
+    const result = await runAgentWithRetry(agent, "prompt", "model", "/cwd", schema, false, 3, executor);
     expect(result).toEqual({ value: "ok" });
   });
 
   it("retries and succeeds on second attempt", async () => {
     const agent = makeMockAgent();
     const executor = vi.fn().mockResolvedValueOnce({ wrong: "shape" }).mockResolvedValueOnce({ value: "ok" });
-    const result = await runAgentWithRetry(agent, "prompt", "model", "/cwd", schema, 3, executor);
+    const result = await runAgentWithRetry(agent, "prompt", "model", "/cwd", schema, false, 3, executor);
     expect(result).toEqual({ value: "ok" });
     expect(executor).toHaveBeenCalledTimes(2);
   });
@@ -34,7 +34,7 @@ describe("runAgentWithRetry", () => {
   it("throws after maxRetries failed attempts and includes Zod error", async () => {
     const agent = makeMockAgent();
     const executor = vi.fn().mockResolvedValue({ wrong: "shape" });
-    await expect(runAgentWithRetry(agent, "prompt", "model", "/cwd", schema, 3, executor)).rejects.toThrow(
+    await expect(runAgentWithRetry(agent, "prompt", "model", "/cwd", schema, false, 3, executor)).rejects.toThrow(
       "Agent returned invalid response after 3 attempts",
     );
   });
@@ -42,13 +42,15 @@ describe("runAgentWithRetry", () => {
   it("throws error message containing Zod issue details", async () => {
     const agent = makeMockAgent();
     const executor = vi.fn().mockResolvedValue({ wrong: "shape" });
-    await expect(runAgentWithRetry(agent, "prompt", "model", "/cwd", schema, 1, executor)).rejects.toThrow("value");
+    await expect(runAgentWithRetry(agent, "prompt", "model", "/cwd", schema, false, 1, executor)).rejects.toThrow(
+      "value",
+    );
   });
 
   it("propagates executor errors immediately without retrying", async () => {
     const agent = makeMockAgent();
     const executor = vi.fn().mockRejectedValue(new Error("spawn failed"));
-    await expect(runAgentWithRetry(agent, "prompt", "model", "/cwd", schema, 3, executor)).rejects.toThrow(
+    await expect(runAgentWithRetry(agent, "prompt", "model", "/cwd", schema, false, 3, executor)).rejects.toThrow(
       "spawn failed",
     );
     expect(executor).toHaveBeenCalledTimes(1);

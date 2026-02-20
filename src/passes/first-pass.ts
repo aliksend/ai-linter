@@ -25,6 +25,7 @@ Instructions:
    - "warning" — violation of a recommendation or potential issue
 
 Return ONLY valid JSON (no markdown):
+\`\`\`json
 {
   "issues": [
     {
@@ -36,14 +37,28 @@ Return ONLY valid JSON (no markdown):
     }
   ]
 }
+\`\`\`
 
 The "line" field can be a single line ("42") or a range ("20-45").
 
-If there are no violations, return: {"issues": []}`;
+If there are no violations, return:
+
+\`\`\`json
+{"issues": []}
+\`\`\`
+
+`;
 }
 
 export async function executeFirstPass(ruleFile: RuleFile, config: Config): Promise<FirstPassResult> {
   const prompt = buildFirstPassPrompt(ruleFile.content);
-  const response = await runAgentWithRetry(config.agent, prompt, config.modelFast, ruleFile.dir, FirstPassResponseSchema);
+  const response = await runAgentWithRetry(
+    config.agent,
+    prompt,
+    config.modelFast,
+    ruleFile.dir,
+    FirstPassResponseSchema,
+    config.verbose,
+  );
   return { ruleFile, issues: response.issues };
 }

@@ -19,11 +19,11 @@ describe("QwenAgent", () => {
   });
 
   it("parses valid JSON result string", () => {
-    const stdout = JSON.stringify({ result: '{"issues":[]}' });
-    expect(agent.parseResponse(stdout)).toEqual({ issues: [] });
+    const stdout = JSON.stringify([{ foo: "bar" }, { result: '{"issues":[]}' }]);
+    expect(agent.getJsonResponse(stdout)).toEqual('{"issues":[]}');
   });
 
   it("throws when result field is missing", () => {
-    expect(() => agent.parseResponse(JSON.stringify({}))).toThrow("missing 'result'");
+    expect(() => agent.getJsonResponse(JSON.stringify([]))).toThrow("missing 'result'");
   });
 });

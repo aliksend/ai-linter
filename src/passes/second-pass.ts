@@ -23,6 +23,7 @@ Instructions:
 
 Return ONLY valid JSON:
 - If the problem is confirmed:
+\`\`\`json
 {
   "confirmed": true,
   "severity": "error" or "warning",
@@ -31,14 +32,24 @@ Return ONLY valid JSON:
   "rule": "rule name",
   "explanation": "detailed explanation of the problem and how to fix it (2-3 sentences)"
 }
+\`\`\`
 - If false positive:
+\`\`\`json
 {"confirmed": false}
+\`\`\`
 
 The "line" field can be a single line ("42") or a range ("20-45").`;
 }
 
 export async function executeSecondPass(issue: RawIssue, cwd: string, config: Config): Promise<VerifiedIssue | null> {
   const prompt = buildSecondPassPrompt(issue);
-  const response = await runAgentWithRetry(config.agent, prompt, config.modelReview, cwd, SecondPassResponseSchema);
+  const response = await runAgentWithRetry(
+    config.agent,
+    prompt,
+    config.modelReview,
+    cwd,
+    SecondPassResponseSchema,
+    config.verbose,
+  );
   return response.confirmed ? response : null;
 }
