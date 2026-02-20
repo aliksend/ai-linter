@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { AgentAdapter } from "./agents.js";
+import { AgentAdapter } from "./agents.js";
 
 export const AGENT_TYPES = ["claude", "qwen"] as const;
 export type AgentType = (typeof AGENT_TYPES)[number];
@@ -37,12 +37,13 @@ export const VerifiedIssue = z.object({
 });
 export type VerifiedIssue = z.infer<typeof VerifiedIssue>;
 
-export interface Config {
-  projectPath: string;
-  concurrency: number;
-  modelFast: string;
-  modelReview: string;
-  outputPath: string;
-  verbose: boolean;
-  agent: AgentAdapter;
-}
+export const Config = z.object({
+  projectPath: z.string(),
+  concurrency: z.number(),
+  modelFast: z.string(),
+  modelReview: z.string(),
+  outputPath: z.string(),
+  verbose: z.boolean(),
+  agent: z.instanceof(AgentAdapter),
+});
+export type Config = z.infer<typeof Config>;

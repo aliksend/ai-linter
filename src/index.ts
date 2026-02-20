@@ -5,7 +5,7 @@ import { scanForRuleFiles } from "./scanner.js";
 import { executeFirstPass } from "./passes/first-pass.js";
 import { executeSecondPass } from "./passes/second-pass.js";
 import { generateReport } from "./report.js";
-import { AGENT_TYPES, AgentType, type Config, type RawIssue, type VerifiedIssue } from "./types.js";
+import { AGENT_TYPES, AgentType, Config, type RawIssue, type VerifiedIssue } from "./types.js";
 import type { AgentAdapter } from "./agents.js";
 import { ClaudeAgent } from "./agents/claude.js";
 import { QwenAgent } from "./agents/qwen.js";
@@ -43,8 +43,8 @@ program
   .version("0.1.0")
   .argument("[path]", "Project root to check", ".")
   .option("-c, --concurrency <n>", "Max parallel agent sessions", "5")
-  .option("--model-fast <model>", "Model for first pass", "haiku")
-  .option("--model-review <model>", "Model for second pass", "sonnet")
+  .option("--model-fast <model>", "Model for first pass")
+  .option("--model-review <model>", "Model for second pass")
   .option("--agent <type>", "AI agent to use: claude or qwen", "claude")
   .option("-o, --output <path>", "Output report path", "ai-linter-report.md")
   .option("-v, --verbose", "Verbose output", false)
@@ -61,15 +61,17 @@ program
       process.exit(2);
     }
 
-    const config: Config = {
+    const agent = createAgent(agentType as AgentType);
+
+    const config = Config.parse({
       projectPath: resolve(pathArg),
       concurrency,
-      modelFast: opts.modelFast,
-      modelReview: opts.modelReview,
+      modelFast: opts.modelFast ?? agent.defaultFastModel,
+      modelReview: opts.modelReview ?? agent.defaultReviewModel,
       outputPath: resolve(opts.output),
       verbose: opts.verbose,
-      agent: createAgent(agentType as AgentType),
-    };
+      agent,
+    });
 
     try {
       // Step 1: Find rule files

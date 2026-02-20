@@ -1,10 +1,13 @@
-export interface AgentAdapter {
+export abstract class AgentAdapter {
   /** Executable name, e.g. "claude" or "qwen" */
-  command: string;
+  abstract command: string;
   /** Build CLI arguments for a one-shot prompt */
-  buildArgs(prompt: string, model: string): string[];
+  abstract buildArgs(prompt: string, model: string): string[];
   /** Parse raw stdout from the process into unknown (for Zod validation) */
-  parseResponse(stdout: string): unknown;
+  abstract parseResponse(stdout: string): unknown;
+
+  abstract defaultFastModel: string;
+  abstract defaultReviewModel: string;
 }
 
 function stripCodeFences(text: string): string {

@@ -6,6 +6,8 @@ import type { AgentAdapter } from "./agents.js";
 function makeMockAgent(parseResult: unknown = {}): AgentAdapter {
   return {
     command: "mock",
+    defaultFastModel: "fast",
+    defaultReviewModel: "review",
     buildArgs: vi.fn().mockReturnValue([]),
     parseResponse: vi.fn().mockReturnValue(parseResult),
   };
