@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildFirstPassPrompt } from "../passes/first-pass.js";
+import { buildFirstPassPrompt } from "./first-pass.js";
 
 describe("buildFirstPassPrompt", () => {
   it("includes rules content in prompt", () => {

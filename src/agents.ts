@@ -7,9 +7,6 @@ export interface AgentAdapter {
   parseResponse(stdout: string): unknown;
 }
 
-export const AGENT_TYPES = ["claude", "qwen"] as const;
-export type AgentType = typeof AGENT_TYPES[number];
-
 function stripCodeFences(text: string): string {
   return text
     .trim()
@@ -18,7 +15,7 @@ function stripCodeFences(text: string): string {
     .trim();
 }
 
-function parseJsonEnvelope(stdout: string): unknown {
+export function parseJsonEnvelope(stdout: string): unknown {
   const parsed = JSON.parse(stdout);
   const result = parsed.result;
   if (result === undefined || result === null) {
@@ -34,35 +31,4 @@ function parseJsonEnvelope(stdout: string): unknown {
     return JSON.parse(resultStr);
   }
   return result;
-}
-
-export class ClaudeAgent implements AgentAdapter {
-  command = "claude";
-
-  buildArgs(prompt: string, model: string): string[] {
-    return ["-p", prompt, "--model", model, "--output-format", "json"];
-  }
-
-  parseResponse(stdout: string): unknown {
-    return parseJsonEnvelope(stdout);
-  }
-}
-
-export class QwenAgent implements AgentAdapter {
-  command = "qwen";
-
-  buildArgs(prompt: string, model: string): string[] {
-    return [prompt, "--model", model, "--output-format", "json"];
-  }
-
-  parseResponse(stdout: string): unknown {
-    return parseJsonEnvelope(stdout);
-  }
-}
-
-export function createAgent(type: AgentType): AgentAdapter {
-  switch (type) {
-    case "claude": return new ClaudeAgent();
-    case "qwen":   return new QwenAgent();
-  }
 }

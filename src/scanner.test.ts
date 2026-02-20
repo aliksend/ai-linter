@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { scanForRuleFiles } from "../scanner.js";
+import { scanForRuleFiles } from "./scanner.js";
 
 const TMP = join(import.meta.dirname, "../../.tmp-test-scanner");
 

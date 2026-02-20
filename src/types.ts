@@ -1,6 +1,9 @@
 import { z } from "zod";
 import type { AgentAdapter } from "./agents.js";
 
+export const AGENT_TYPES = ["claude", "qwen"] as const;
+export type AgentType = (typeof AGENT_TYPES)[number];
+
 export interface RuleFile {
   /** Absolute path to .ai-linter.md */
   path: string;

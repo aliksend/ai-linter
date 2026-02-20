@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { generateReport } from "../report.js";
-import type { VerifiedIssue } from "../types.js";
+import { generateReport } from "./report.js";
+import type { VerifiedIssue } from "./types.js";
 
 describe("generateReport", () => {
   it("generates report with errors and warnings", () => {

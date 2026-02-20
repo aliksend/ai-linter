@@ -5,15 +5,12 @@ import { scanForRuleFiles } from "./scanner.js";
 import { executeFirstPass } from "./passes/first-pass.js";
 import { executeSecondPass } from "./passes/second-pass.js";
 import { generateReport } from "./report.js";
-import type { Config, RawIssue, VerifiedIssue } from "./types.js";
-import { createAgent, AGENT_TYPES } from "./agents.js";
-import type { AgentType } from "./agents.js";
+import { AGENT_TYPES, AgentType, type Config, type RawIssue, type VerifiedIssue } from "./types.js";
+import type { AgentAdapter } from "./agents.js";
+import { ClaudeAgent } from "./agents/claude.js";
+import { QwenAgent } from "./agents/qwen.js";
 
-async function runWithConcurrency<T, R>(
-  items: T[],
-  concurrency: number,
-  fn: (item: T) => Promise<R>,
-): Promise<R[]> {
+async function runWithConcurrency<T, R>(items: T[], concurrency: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const results: R[] = [];
   let index = 0;
 
@@ -24,12 +21,18 @@ async function runWithConcurrency<T, R>(
     }
   }
 
-  const workers = Array.from(
-    { length: Math.min(concurrency, items.length) },
-    () => worker(),
-  );
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => worker());
   await Promise.all(workers);
   return results;
+}
+
+function createAgent(type: AgentType): AgentAdapter {
+  switch (type) {
+    case "claude":
+      return new ClaudeAgent();
+    case "qwen":
+      return new QwenAgent();
+  }
 }
 
 const program = new Command();
@@ -81,14 +84,10 @@ program
       console.log(`Found ${ruleFiles.length} rule file(s). Starting first pass...`);
 
       // Step 2: First pass — parallel scan
-      const firstPassResults = await runWithConcurrency(
-        ruleFiles,
-        config.concurrency,
-        async (rf) => {
-          if (config.verbose) console.log(`  Scanning: ${rf.dir}`);
-          return executeFirstPass(rf, config);
-        },
-      );
+      const firstPassResults = await runWithConcurrency(ruleFiles, config.concurrency, async (rf) => {
+        if (config.verbose) console.log(`  Scanning: ${rf.dir}`);
+        return executeFirstPass(rf, config);
+      });
 
       const allRawIssues: { issue: RawIssue; cwd: string }[] = [];
       for (const result of firstPassResults) {
@@ -97,9 +96,7 @@ program
         }
       }
 
-      console.log(
-        `First pass complete. Found ${allRawIssues.length} potential issue(s).`,
-      );
+      console.log(`First pass complete. Found ${allRawIssues.length} potential issue(s).`);
 
       if (allRawIssues.length === 0) {
         console.log("No issues found. Code looks clean!");
@@ -113,14 +110,10 @@ program
       console.log("Starting second pass (verification)...");
       const verifiedIssues: VerifiedIssue[] = [];
 
-      const secondPassResults = await runWithConcurrency(
-        allRawIssues,
-        config.concurrency,
-        async ({ issue, cwd }) => {
-          if (config.verbose) console.log(`  Verifying: ${issue.file}:${issue.line}`);
-          return executeSecondPass(issue, cwd, config);
-        },
-      );
+      const secondPassResults = await runWithConcurrency(allRawIssues, config.concurrency, async ({ issue, cwd }) => {
+        if (config.verbose) console.log(`  Verifying: ${issue.file}:${issue.line}`);
+        return executeSecondPass(issue, cwd, config);
+      });
 
       for (const result of secondPassResults) {
         if (result !== null) {
@@ -128,9 +121,7 @@ program
         }
       }
 
-      console.log(
-        `Second pass complete. ${verifiedIssues.length} issue(s) confirmed.`,
-      );
+      console.log(`Second pass complete. ${verifiedIssues.length} issue(s) confirmed.`);
 
       // Step 4: Generate report
       const report = generateReport(verifiedIssues, config.projectPath);
