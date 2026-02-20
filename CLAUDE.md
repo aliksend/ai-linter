@@ -81,7 +81,6 @@ ai-linter/
 ├── src/               — TypeScript source
 ├── dist/              — compiled output (gitignored, run `npm run build`)
 ├── e2e/test-project/  — smoke test fixtures (.ai-linter.md, bad.ts, good.ts)
-└── docs/plans/        — design doc and implementation plan
 ```
 
 ## .ai-linter.md Format
@@ -92,16 +91,14 @@ Example:
 ```markdown
 # Rules
 
-1. **ЗАПРЕЩЕНО** использовать `console.log` в production-коде
-2. Все функции должны иметь явный return type
-3. В этой директории должны быть только методы доступа к БД
+1. Must not use `console.log` in production code
+2. All functions should have an explicit return type
 ```
 
 ## Running E2E Smoke Test
 
 ```bash
-npm run build
-node bin/ai-linter.js e2e/test-project -o e2e/test-report.md -v
+tsx src/index.ts e2e/test-project -o e2e/test-report.md -v
 cat e2e/test-report.md
 ```
 
