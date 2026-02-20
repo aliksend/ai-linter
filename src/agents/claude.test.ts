@@ -8,15 +8,19 @@ describe("ClaudeAgent", () => {
     expect(agent.command).toBe("claude");
   });
 
-  it("builds correct args", () => {
+  it("builds correct args with provided model", () => {
     expect(agent.buildArgs("my prompt", "haiku")).toEqual([
       "-p",
       "my prompt",
-      "--model",
-      "haiku",
       "--output-format",
       "json",
+      "--model",
+      "haiku",
     ]);
+  });
+
+  it("builds correct args without provided model", () => {
+    expect(agent.buildArgs("my prompt", undefined)).toEqual(["-p", "my prompt", "--output-format", "json"]);
   });
 
   it("parses valid JSON result string", () => {

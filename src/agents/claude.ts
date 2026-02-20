@@ -5,8 +5,12 @@ export class ClaudeAgent extends AgentAdapter {
   defaultFastModel = "haiku";
   defaultReviewModel = "sonnet";
 
-  buildArgs(prompt: string, model: string): string[] {
-    return ["-p", prompt, "--model", model, "--output-format", "json"];
+  buildArgs(prompt: string, model: undefined | string): string[] {
+    const args = ["-p", prompt, "--output-format", "json"];
+    if (model) {
+      args.push("--model", model);
+    }
+    return args;
   }
 
   getJsonResponse(stdout: string): string {

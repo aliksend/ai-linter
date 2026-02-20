@@ -5,7 +5,7 @@ import type { AgentAdapter } from "./agents.js";
 export async function runAgent(
   agent: AgentAdapter,
   prompt: string,
-  model: string,
+  model: undefined | string,
   cwd: string,
   verbose: boolean,
 ): Promise<unknown> {
@@ -75,7 +75,7 @@ export async function runAgent(
 export async function runAgentWithRetry<T>(
   agent: AgentAdapter,
   prompt: string,
-  model: string,
+  model: undefined | string,
   cwd: string,
   schema: z.ZodType<T>,
   verbose: boolean,
@@ -83,7 +83,7 @@ export async function runAgentWithRetry<T>(
   executor: (
     agent: AgentAdapter,
     prompt: string,
-    model: string,
+    model: undefined | string,
     cwd: string,
     verbose: boolean,
   ) => Promise<unknown> = runAgent,

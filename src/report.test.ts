@@ -22,7 +22,7 @@ describe("generateReport", () => {
         explanation: "Use const instead of let.",
       },
     ];
-    const report = generateReport(issues, "/my/project");
+    const report = generateReport(issues);
     expect(report).toContain("# AI Linter Report");
     expect(report).toContain("1 error");
     expect(report).toContain("1 warning");
@@ -36,7 +36,7 @@ describe("generateReport", () => {
   });
 
   it("generates clean report when no issues", () => {
-    const report = generateReport([], "/my/project");
+    const report = generateReport([]);
     expect(report).toContain("# AI Linter Report");
     expect(report).toContain("0 errors, 0 warnings");
     expect(report).not.toContain("## Errors");
@@ -62,7 +62,7 @@ describe("generateReport", () => {
         explanation: "Another problem.",
       },
     ];
-    const report = generateReport(issues, "/p");
+    const report = generateReport(issues);
     expect(report).toContain("**Line 5**");
     expect(report).toContain("**Lines 10-20**");
   });

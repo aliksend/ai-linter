@@ -102,7 +102,7 @@ program
 
       if (allRawIssues.length === 0) {
         console.log("No issues found. Code looks clean!");
-        const report = generateReport([], config.projectPath);
+        const report = generateReport([]);
         await writeFile(config.outputPath, report, "utf-8");
         console.log(`Report saved to ${config.outputPath}`);
         process.exit(0);
@@ -126,7 +126,7 @@ program
       console.log(`Second pass complete. ${verifiedIssues.length} issue(s) confirmed.`);
 
       // Step 4: Generate report
-      const report = generateReport(verifiedIssues, config.projectPath);
+      const report = generateReport(verifiedIssues);
       await writeFile(config.outputPath, report, "utf-8");
       console.log(`Report saved to ${config.outputPath}`);
 

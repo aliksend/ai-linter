@@ -2,11 +2,15 @@ import { AgentAdapter, stripCodeFences } from "../agents.js";
 
 export class QwenAgent extends AgentAdapter {
   command = "qwen";
-  defaultFastModel = "qwen3-coder";
-  defaultReviewModel = "qwen3-coder";
+  defaultFastModel = undefined;
+  defaultReviewModel = undefined;
 
-  buildArgs(prompt: string, model: string): string[] {
-    return [prompt, "--model", model, "--output-format", "json"];
+  buildArgs(prompt: string, model: undefined | string): string[] {
+    const args = [prompt, "--output-format", "json"];
+    if (model) {
+      args.push("--model", model);
+    }
+    return args;
   }
 
   getJsonResponse(stdout: string): string {

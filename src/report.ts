@@ -16,30 +16,23 @@ function formatIssuesByFile(issues: VerifiedIssue[]): string {
   for (const [file, fileIssues] of byFile) {
     sections.push(`### \`${file}\`\n`);
     for (const issue of fileIssues) {
-      sections.push(
-        `- ${formatLine(issue.line)} — [${issue.rule}] ${issue.explanation}\n`,
-      );
+      sections.push(`- ${formatLine(issue.line)} — [${issue.rule}] ${issue.explanation}\n`);
     }
   }
   return sections.join("\n");
 }
 
-export function generateReport(
-  issues: VerifiedIssue[],
-  projectPath: string,
-): string {
+export function generateReport(issues: VerifiedIssue[]): string {
   const errors = issues.filter((i) => i.severity === "error");
   const warnings = issues.filter((i) => i.severity === "warning");
 
-  const now = new Date().toISOString().replace("T", " ").replace(/\.\d+Z$/, "");
   const errorWord = errors.length === 1 ? "error" : "errors";
   const warningWord = warnings.length === 1 ? "warning" : "warnings";
 
   const lines: string[] = [
     "# AI Linter Report",
     "",
-    `**Date:** ${now}`,
-    `**Project:** \`${projectPath}\``,
+    `**Date:** ${new Date().toLocaleString()}`,
     `**Found:** ${errors.length} ${errorWord}, ${warnings.length} ${warningWord}`,
     "",
   ];

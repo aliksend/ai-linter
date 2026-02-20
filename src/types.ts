@@ -40,8 +40,8 @@ export type VerifiedIssue = z.infer<typeof VerifiedIssue>;
 export const Config = z.object({
   projectPath: z.string(),
   concurrency: z.number(),
-  modelFast: z.string(),
-  modelReview: z.string(),
+  modelFast: z.string().optional(),
+  modelReview: z.string().optional(),
   outputPath: z.string(),
   verbose: z.boolean(),
   agent: z.instanceof(AgentAdapter),

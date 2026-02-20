@@ -8,14 +8,18 @@ describe("QwenAgent", () => {
     expect(agent.command).toBe("qwen");
   });
 
-  it("builds args with prompt as positional", () => {
+  it("builds args with provided model", () => {
     expect(agent.buildArgs("my prompt", "qwen-max")).toEqual([
       "my prompt",
-      "--model",
-      "qwen-max",
       "--output-format",
       "json",
+      "--model",
+      "qwen-max",
     ]);
+  });
+
+  it("builds args without provided model", () => {
+    expect(agent.buildArgs("my prompt", undefined)).toEqual(["my prompt", "--output-format", "json"]);
   });
 
   it("parses valid JSON result string", () => {
