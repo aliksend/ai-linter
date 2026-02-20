@@ -1,7 +1,7 @@
 import type { VerifiedIssue } from "./types.js";
 
 function formatLine(line: string): string {
-  return /^\d+-\d+$/.test(line) ? `**Строки ${line}**` : `**Строка ${line}**`;
+  return /^\d+-\d+$/.test(line) ? `**Lines ${line}**` : `**Line ${line}**`;
 }
 
 function formatIssuesByFile(issues: VerifiedIssue[]): string {
@@ -38,9 +38,9 @@ export function generateReport(
   const lines: string[] = [
     "# AI Linter Report",
     "",
-    `**Дата:** ${now}`,
-    `**Проект:** \`${projectPath}\``,
-    `**Найдено:** ${errors.length} ${errorWord}, ${warnings.length} ${warningWord}`,
+    `**Date:** ${now}`,
+    `**Project:** \`${projectPath}\``,
+    `**Found:** ${errors.length} ${errorWord}, ${warnings.length} ${warningWord}`,
     "",
   ];
 

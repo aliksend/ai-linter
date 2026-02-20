@@ -29,8 +29,8 @@ describe("generateReport", () => {
     expect(report).toContain("## Errors");
     expect(report).toContain("## Warnings");
     expect(report).toContain("`src/a.ts`");
-    expect(report).toContain("**Строка 10**");
-    expect(report).toContain("**Строки 20-30**");
+    expect(report).toContain("**Line 10**");
+    expect(report).toContain("**Lines 20-30**");
     expect(report).toContain("[no-foo]");
     expect(report).toContain("[prefer-const]");
   });
@@ -63,7 +63,7 @@ describe("generateReport", () => {
       },
     ];
     const report = generateReport(issues, "/p");
-    expect(report).toContain("**Строка 5**");
-    expect(report).toContain("**Строки 10-20**");
+    expect(report).toContain("**Line 5**");
+    expect(report).toContain("**Lines 10-20**");
   });
 });

@@ -2,36 +2,36 @@ import type { RawIssue, RuleFile, FirstPassResult, Config } from "../types.js";
 import { runClaude } from "../runner.js";
 
 export function buildFirstPassPrompt(rulesContent: string): string {
-  return `Ты AI-линтер. Твоя задача — проверить код в текущей директории на соответствие правилам, описанным ниже.
+  return `You are an AI linter. Your task is to check the code in the current directory against the rules described below.
 
-ПРАВИЛА:
+RULES:
 ---
 ${rulesContent}
 ---
 
-Инструкции:
-1. Изучи файлы в текущей директории и вложенных папках
-2. Проверь код на соответствие каждому правилу
-3. Для каждого нарушения определи severity:
-   - "error" — явное нарушение запрета или обязательного требования
-   - "warning" — нарушение рекомендации или потенциальная проблема
+Instructions:
+1. Examine files in the current directory and subdirectories
+2. Check the code against each rule
+3. For each violation, determine the severity:
+   - "error" — explicit violation of a prohibition or mandatory requirement
+   - "warning" — violation of a recommendation or potential issue
 
-Верни ТОЛЬКО валидный JSON (без markdown):
+Return ONLY valid JSON (no markdown):
 {
   "issues": [
     {
       "file": "path/to/file.ts",
       "line": "42",
       "severity": "error",
-      "rule": "краткое название правила",
-      "description": "что не так (1 предложение)"
+      "rule": "short rule name",
+      "description": "what is wrong (1 sentence)"
     }
   ]
 }
 
-Поле "line" может быть одной строкой ("42") или диапазоном ("20-45").
+The "line" field can be a single line ("42") or a range ("20-45").
 
-Если нарушений нет, верни: {"issues": []}`;
+If there are no violations, return: {"issues": []}`;
 }
 
 function isRawIssue(item: unknown): item is RawIssue {

@@ -2,32 +2,32 @@ import type { RawIssue, VerifiedIssue, Config } from "../types.js";
 import { runClaude } from "../runner.js";
 
 export function buildSecondPassPrompt(issue: RawIssue): string {
-  return `Ты опытный ревьюер кода. Проверь, действительно ли это нарушение правил.
+  return `You are an experienced code reviewer. Verify whether this is actually a rule violation.
 
-ПРАВИЛО: ${issue.rule}
-ФАЙЛ: ${issue.file}
-СТРОКА(И): ${issue.line}
-ОПИСАНИЕ ПРОБЛЕМЫ: ${issue.description}
+RULE: ${issue.rule}
+FILE: ${issue.file}
+LINE(S): ${issue.line}
+PROBLEM DESCRIPTION: ${issue.description}
 
-Инструкции:
-1. Прочитай указанный файл
-2. Проанализируй, действительно ли описанная проблема существует
-3. Если это ложное срабатывание — верни {"confirmed": false}
+Instructions:
+1. Read the specified file
+2. Analyze whether the described problem actually exists
+3. If this is a false positive — return {"confirmed": false}
 
-Верни ТОЛЬКО валидный JSON:
-- Если проблема подтверждена:
+Return ONLY valid JSON:
+- If the problem is confirmed:
 {
   "confirmed": true,
-  "severity": "error" или "warning",
+  "severity": "error" or "warning",
   "file": "path/to/file.ts",
   "line": "42",
-  "rule": "название правила",
-  "explanation": "подробное объяснение проблемы и как её исправить (2-3 предложения)"
+  "rule": "rule name",
+  "explanation": "detailed explanation of the problem and how to fix it (2-3 sentences)"
 }
-- Если ложное срабатывание:
+- If false positive:
 {"confirmed": false}
 
-Поле "line" может быть одной строкой ("42") или диапазоном ("20-45").`;
+The "line" field can be a single line ("42") or a range ("20-45").`;
 }
 
 function isVerifiedIssue(obj: unknown): obj is VerifiedIssue {
