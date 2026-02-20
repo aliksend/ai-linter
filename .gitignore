@@ -1,3 +1,4 @@
 node_modules/
 dist/
 ai-linter-report.md
+e2e/test-report.md
