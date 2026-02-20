@@ -28,6 +28,7 @@ node bin/ai-linter.js [path] [options]
 #   -c, --concurrency <n>   Max parallel Claude sessions (default: 5)
 #   --model-fast <model>    Model for first pass (default: haiku)
 #   --model-review <model>  Model for second pass (default: sonnet)
+#   --agent <type>          AI agent to use: claude or qwen (default: claude)
 #   -o, --output <path>     Output report path (default: ai-linter-report.md)
 #   -v, --verbose           Print per-file/issue progress
 ```
@@ -39,6 +40,7 @@ src/
 ├── index.ts           — CLI entry point (commander, runWithConcurrency, pipeline)
 ├── scanner.ts         — finds .ai-linter.md files recursively (fast-glob)
 ├── runner.ts          — wraps `claude -p` subprocess, parses JSON response
+├── agents.ts          — AgentAdapter interface, ClaudeAgent, QwenAgent, createAgent()
 ├── passes/
 │   ├── first-pass.ts  — builds scan prompt, parses RawIssue[]
 │   └── second-pass.ts — builds verify prompt, parses VerifiedIssue | null
@@ -62,16 +64,16 @@ src/
 | `1` | At least one `error`-severity issue confirmed |
 | `2` | Tool error (claude unavailable, parse failure, etc.) |
 
-## Claude CLI Integration
+## Agent CLI Integration
 
-The tool runs `claude -p <prompt> --model <model> --output-format json` as a subprocess for each AI call. Claude Code wraps the model's response in a JSON envelope `{ result: <string|object> }`.
+The tool runs the selected agent CLI as a subprocess for each AI call, e.g.:
+- `claude -p <prompt> --model <model> --output-format json`
+- `qwen <prompt> --model <model> --output-format json`
+
+Both CLIs wrap the model's response in a JSON envelope `{ result: <string|object> }`.
+Each `AgentAdapter` implementation handles building the correct arguments and parsing the response.
 
 **Important:** `claude` refuses to run inside an existing Claude Code session (`CLAUDECODE` env var is set). Run `ai-linter` from a regular terminal, not from inside Claude Code.
-
-The runner (`src/runner.ts`) handles:
-- Unwrapping the `{ result }` envelope
-- Stripping markdown code fences (`` ```json `` ... `` ``` ``) if the model wraps its JSON response
-- Showing raw Claude output in error messages for debugging
 
 ## Project Structure
 
