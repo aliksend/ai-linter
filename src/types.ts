@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export interface RuleFile {
   /** Absolute path to .ai-linter.md */
   path: string;
@@ -7,27 +9,29 @@ export interface RuleFile {
   content: string;
 }
 
-export interface RawIssue {
-  file: string;
-  line: string;
-  severity: "error" | "warning";
-  rule: string;
-  description: string;
-}
+export const RawIssueSchema = z.object({
+  file: z.string(),
+  line: z.string(),
+  severity: z.enum(["error", "warning"]),
+  rule: z.string(),
+  description: z.string(),
+});
+export type RawIssue = z.infer<typeof RawIssueSchema>;
 
 export interface FirstPassResult {
   ruleFile: RuleFile;
   issues: RawIssue[];
 }
 
-export interface VerifiedIssue {
-  confirmed: true;
-  severity: "error" | "warning";
-  file: string;
-  line: string;
-  rule: string;
-  explanation: string;
-}
+export const VerifiedIssueSchema = z.object({
+  confirmed: z.literal(true),
+  severity: z.enum(["error", "warning"]),
+  file: z.string(),
+  line: z.string(),
+  rule: z.string(),
+  explanation: z.string(),
+});
+export type VerifiedIssue = z.infer<typeof VerifiedIssueSchema>;
 
 export interface Config {
   projectPath: string;
