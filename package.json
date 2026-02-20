@@ -1,11 +1,18 @@
 {
-  "name": "ai-linter",
+  "name": "@aliksend/ai-linter",
   "version": "0.1.0",
   "description": "AI-powered code linter using Claude",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
     "ai-linter": "./bin/ai-linter.js"
+  },
+  "files": [
+    "dist/",
+    "bin/"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsc",
