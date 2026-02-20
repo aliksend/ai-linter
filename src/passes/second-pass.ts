@@ -1,5 +1,12 @@
+import { z } from "zod";
+import { VerifiedIssueSchema } from "../types.js";
 import type { RawIssue, VerifiedIssue, Config } from "../types.js";
-import { runClaude } from "../runner.js";
+import { runClaudeWithRetry } from "../runner.js";
+
+const SecondPassResponseSchema = z.discriminatedUnion("confirmed", [
+  VerifiedIssueSchema,
+  z.object({ confirmed: z.literal(false) }),
+]);
 
 export function buildSecondPassPrompt(issue: RawIssue): string {
   return `You are an experienced code reviewer. Verify whether this is actually a rule violation.
@@ -30,30 +37,17 @@ Return ONLY valid JSON:
 The "line" field can be a single line ("42") or a range ("20-45").`;
 }
 
-function isVerifiedIssue(obj: unknown): obj is VerifiedIssue {
-  if (typeof obj !== "object" || obj === null) return false;
-  const o = obj as Record<string, unknown>;
-  return (
-    o.confirmed === true &&
-    (o.severity === "error" || o.severity === "warning") &&
-    typeof o.file === "string" &&
-    typeof o.line === "string" &&
-    typeof o.rule === "string" &&
-    typeof o.explanation === "string"
-  );
-}
-
-export function parseSecondPassResponse(response: unknown): VerifiedIssue | null {
-  if (!isVerifiedIssue(response)) return null;
-  return response;
-}
-
 export async function executeSecondPass(
   issue: RawIssue,
   cwd: string,
   config: Config,
 ): Promise<VerifiedIssue | null> {
   const prompt = buildSecondPassPrompt(issue);
-  const response = await runClaude(prompt, config.modelReview, cwd);
-  return parseSecondPassResponse(response);
+  const response = await runClaudeWithRetry(
+    prompt,
+    config.modelReview,
+    cwd,
+    SecondPassResponseSchema,
+  );
+  return response.confirmed ? response : null;
 }
