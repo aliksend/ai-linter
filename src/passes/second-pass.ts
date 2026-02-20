@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { VerifiedIssueSchema } from "../types.js";
-import type { RawIssue, VerifiedIssue, Config } from "../types.js";
+import { VerifiedIssue } from "../types.js";
+import type { RawIssue, Config } from "../types.js";
 import { runClaudeWithRetry } from "../runner.js";
 
 const SecondPassResponseSchema = z.discriminatedUnion("confirmed", [
-  VerifiedIssueSchema,
+  VerifiedIssue,
   z.object({ confirmed: z.literal(false) }),
 ]);
 
@@ -37,17 +37,8 @@ Return ONLY valid JSON:
 The "line" field can be a single line ("42") or a range ("20-45").`;
 }
 
-export async function executeSecondPass(
-  issue: RawIssue,
-  cwd: string,
-  config: Config,
-): Promise<VerifiedIssue | null> {
+export async function executeSecondPass(issue: RawIssue, cwd: string, config: Config): Promise<VerifiedIssue | null> {
   const prompt = buildSecondPassPrompt(issue);
-  const response = await runClaudeWithRetry(
-    prompt,
-    config.modelReview,
-    cwd,
-    SecondPassResponseSchema,
-  );
+  const response = await runClaudeWithRetry(prompt, config.modelReview, cwd, SecondPassResponseSchema);
   return response.confirmed ? response : null;
 }

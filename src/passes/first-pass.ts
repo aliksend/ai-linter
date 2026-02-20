@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { RawIssueSchema } from "../types.js";
+import { RawIssue } from "../types.js";
 import type { RuleFile, FirstPassResult, Config } from "../types.js";
 import { runClaudeWithRetry } from "../runner.js";
 
 const FirstPassResponseSchema = z.object({
-  issues: z.array(RawIssueSchema),
+  issues: z.array(RawIssue),
 });
 
 export function buildFirstPassPrompt(rulesContent: string): string {
@@ -42,16 +42,8 @@ The "line" field can be a single line ("42") or a range ("20-45").
 If there are no violations, return: {"issues": []}`;
 }
 
-export async function executeFirstPass(
-  ruleFile: RuleFile,
-  config: Config,
-): Promise<FirstPassResult> {
+export async function executeFirstPass(ruleFile: RuleFile, config: Config): Promise<FirstPassResult> {
   const prompt = buildFirstPassPrompt(ruleFile.content);
-  const response = await runClaudeWithRetry(
-    prompt,
-    config.modelFast,
-    ruleFile.dir,
-    FirstPassResponseSchema,
-  );
+  const response = await runClaudeWithRetry(prompt, config.modelFast, ruleFile.dir, FirstPassResponseSchema);
   return { ruleFile, issues: response.issues };
 }

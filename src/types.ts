@@ -9,21 +9,21 @@ export interface RuleFile {
   content: string;
 }
 
-export const RawIssueSchema = z.object({
+export const RawIssue = z.object({
   file: z.string(),
   line: z.string(),
   severity: z.enum(["error", "warning"]),
   rule: z.string(),
   description: z.string(),
 });
-export type RawIssue = z.infer<typeof RawIssueSchema>;
+export type RawIssue = z.infer<typeof RawIssue>;
 
 export interface FirstPassResult {
   ruleFile: RuleFile;
   issues: RawIssue[];
 }
 
-export const VerifiedIssueSchema = z.object({
+export const VerifiedIssue = z.object({
   confirmed: z.literal(true),
   severity: z.enum(["error", "warning"]),
   file: z.string(),
@@ -31,7 +31,7 @@ export const VerifiedIssueSchema = z.object({
   rule: z.string(),
   explanation: z.string(),
 });
-export type VerifiedIssue = z.infer<typeof VerifiedIssueSchema>;
+export type VerifiedIssue = z.infer<typeof VerifiedIssue>;
 
 export interface Config {
   projectPath: string;
