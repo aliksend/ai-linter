@@ -22,10 +22,18 @@ describe("parseClaudeResponse", () => {
       issues: [{ file: "a.ts", line: "1", severity: "error", rule: "no-foo", description: "bad" }],
     });
   });
-
+  
   it("parses JSON wrapped in markdown code fences", () => {
     const output = JSON.stringify({
       result: '```json\n{"issues": []}\n```',
+    });
+    const result = parseClaudeResponse(output);
+    expect(result).toEqual({ issues: [] });
+  });
+  
+  it("parses JSON wrapped in markdown code fences with prefix", () => {
+    const output = JSON.stringify({
+      result: 'Based on my analysis of the code, here are the violations found:\n\n```json\n{"issues": []}\n```',
     });
     const result = parseClaudeResponse(output);
     expect(result).toEqual({ issues: [] });
