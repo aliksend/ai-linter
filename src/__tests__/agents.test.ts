@@ -39,6 +39,11 @@ describe("ClaudeAgent", () => {
   it("throws when result field is missing", () => {
     expect(() => agent.parseResponse(JSON.stringify({}))).toThrow("missing 'result'");
   });
+
+  it("parses result wrapped in plain code fences", () => {
+    const stdout = JSON.stringify({ result: "```\n{\"issues\":[]}\n```" });
+    expect(agent.parseResponse(stdout)).toEqual({ issues: [] });
+  });
 });
 
 describe("QwenAgent", () => {
@@ -52,6 +57,15 @@ describe("QwenAgent", () => {
     expect(agent.buildArgs("my prompt", "qwen-max")).toEqual([
       "my prompt", "--model", "qwen-max", "--output-format", "json",
     ]);
+  });
+
+  it("parses valid JSON result string", () => {
+    const stdout = JSON.stringify({ result: '{"issues":[]}' });
+    expect(agent.parseResponse(stdout)).toEqual({ issues: [] });
+  });
+
+  it("throws when result field is missing", () => {
+    expect(() => agent.parseResponse(JSON.stringify({}))).toThrow("missing 'result'");
   });
 });
 
