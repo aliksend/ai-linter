@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { AgentAdapter } from "./agents.js";
 
 export interface RuleFile {
   /** Absolute path to .ai-linter.md */
@@ -40,4 +41,5 @@ export interface Config {
   modelReview: string;
   outputPath: string;
   verbose: boolean;
+  agent: AgentAdapter;
 }
