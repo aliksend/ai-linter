@@ -1,6 +1,6 @@
 {
   "name": "@aliksend/ai-linter",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "AI-powered code linter using Claude",
   "type": "module",
   "main": "dist/index.js",
