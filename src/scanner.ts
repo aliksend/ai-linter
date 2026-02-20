@@ -1,6 +1,6 @@
 import fg from "fast-glob";
 import { readFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { dirname } from "node:path";
 import type { RuleFile } from "./types.js";
 
 export async function scanForRuleFiles(projectPath: string): Promise<RuleFile[]> {
