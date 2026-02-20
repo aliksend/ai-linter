@@ -3,6 +3,8 @@ import { runClaude } from "../runner.js";
 
 export function buildFirstPassPrompt(rulesContent: string): string {
   return `You are an AI linter. Your task is to check the code in the current directory against the rules described below.
+Rules that have "Must" or "Have to" in it considered mandatory.
+Rules with "Should" are recommendations.
 
 RULES:
 ---

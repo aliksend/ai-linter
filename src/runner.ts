@@ -19,16 +19,22 @@ export function parseClaudeResponse(stdout: string): unknown {
     throw new Error(`Claude response missing 'result' field: ${stdout}`);
   }
   if (typeof result === "string") {
-    return JSON.parse(stripCodeFences(result));
+    let resultStr = result;
+
+    const fenseStart = resultStr.indexOf("```");
+    if (fenseStart !== -1) {
+      resultStr = resultStr.slice(fenseStart + 3).replace(/^json/, "");
+    }
+    resultStr = stripCodeFences(resultStr);
+
+    // console.log("> TO PARSE", resultStr);
+
+    return JSON.parse(resultStr);
   }
   return result;
 }
 
-export async function runClaude(
-  prompt: string,
-  model: string,
-  cwd: string,
-): Promise<unknown> {
+export async function runClaude(prompt: string, model: string, cwd: string): Promise<unknown> {
   const args = buildClaudeArgs(prompt, model);
 
   return new Promise((resolve, reject) => {
@@ -56,10 +62,11 @@ export async function runClaude(
       try {
         resolve(parseClaudeResponse(stdout));
       } catch (err) {
-        reject(new Error(
-          `Failed to parse claude response: ${err instanceof Error ? err.message : err}\n` +
-          `Raw output:\n${stdout}`,
-        ));
+        reject(
+          new Error(
+            `Failed to parse claude response: ${err instanceof Error ? err.message : err}\n` + `Raw output:\n${stdout}`,
+          ),
+        );
       }
     });
 
