@@ -21,7 +21,7 @@ ${rulesContent}
   "issues": [
     {
       "file": "path/to/file.ts",
-      "line": "42" или "20-45",
+      "line": "42",
       "severity": "error",
       "rule": "краткое название правила",
       "description": "что не так (1 предложение)"
@@ -29,7 +29,21 @@ ${rulesContent}
   ]
 }
 
+Поле "line" может быть одной строкой ("42") или диапазоном ("20-45").
+
 Если нарушений нет, верни: {"issues": []}`;
+}
+
+function isRawIssue(item: unknown): item is RawIssue {
+  if (typeof item !== "object" || item === null) return false;
+  const obj = item as Record<string, unknown>;
+  return (
+    typeof obj.file === "string" &&
+    typeof obj.line === "string" &&
+    (obj.severity === "error" || obj.severity === "warning") &&
+    typeof obj.rule === "string" &&
+    typeof obj.description === "string"
+  );
 }
 
 export function parseFirstPassResponse(response: unknown): RawIssue[] {
@@ -39,7 +53,7 @@ export function parseFirstPassResponse(response: unknown): RawIssue[] {
     "issues" in response &&
     Array.isArray((response as { issues: unknown }).issues)
   ) {
-    return (response as { issues: RawIssue[] }).issues;
+    return (response as { issues: unknown[] }).issues.filter(isRawIssue);
   }
   return [];
 }
