@@ -1,5 +1,4 @@
 import { spawn } from "node:child_process";
-import { z, ZodError } from "zod";
 import type { AgentAdapter } from "./agents.js";
 import { inspect } from "util";
 
@@ -9,7 +8,7 @@ export async function runAgent(
   model: undefined | string,
   cwd: string,
   verbose: boolean,
-): Promise<unknown> {
+): Promise<string> {
   const args = agent.buildArgs(prompt, model);
 
   return new Promise((resolve, reject) => {
@@ -42,26 +41,13 @@ export async function runAgent(
         return;
       }
 
-      let agentResponse: string;
       try {
-        agentResponse = agent.getJsonResponse(stdout);
+        resolve(agent.getTextResponse(stdout));
       } catch (err) {
         reject(
           new Error(
-            `Failed to get ${agent.command} response: ${err instanceof Error ? err.message : err}\n` +
+            `Failed to get ${agent.command} text response: ${err instanceof Error ? err.message : err}\n` +
               `Raw output:\n${stdout}`,
-          ),
-        );
-        return;
-      }
-
-      try {
-        resolve(JSON.parse(agentResponse));
-      } catch (err) {
-        reject(
-          new Error(
-            `Failed to parse ${agent.command} response: ${err instanceof Error ? err.message : err}\n` +
-              `Agent response:\n${agentResponse}`,
           ),
         );
       }
@@ -73,12 +59,11 @@ export async function runAgent(
   });
 }
 
-export async function runAgentWithRetry<T>(
+export async function runAgentWithRetry(
   agent: AgentAdapter,
   prompt: string,
   model: undefined | string,
   cwd: string,
-  schema: z.ZodType<T>,
   verbose: boolean,
   maxRetries: number,
   executor: (
@@ -87,14 +72,12 @@ export async function runAgentWithRetry<T>(
     model: undefined | string,
     cwd: string,
     verbose: boolean,
-  ) => Promise<unknown> = runAgent,
-): Promise<T> {
+  ) => Promise<string> = runAgent,
+): Promise<string> {
   const errors: any[] = [];
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const response = await executor(agent, prompt, model, cwd, verbose);
-      const result = schema.parse(response);
-      return result;
+      return await executor(agent, prompt, model, cwd, verbose);
     } catch (err) {
       console.log(`    Call to agent failed. Retrying... (${attempt + 1}/${maxRetries})`);
       errors.push(err);

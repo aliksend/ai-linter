@@ -1,11 +1,5 @@
-import { z } from "zod";
-import { RawIssue } from "../types.js";
 import type { RuleFile, FirstPassResult, Config } from "../types.js";
 import { runAgentWithRetry } from "../runner.js";
-
-const FirstPassResponseSchema = z.object({
-  issues: z.array(RawIssue),
-});
 
 export function buildFirstPassPrompt(rulesContent: string): string {
   return `You are an AI linter. Your task is to check the code in the current directory against the rules described below.
@@ -21,46 +15,42 @@ ${rulesContent}
 **Instructions**:
 1. Examine files in the current directory and subdirectories
 2. Check the code against each rule
-3. For each violation, determine the severity:
-   - "error" — explicit violation of a prohibition or mandatory requirement
-   - "warning" — violation of a recommendation or potential issue
+3. For each violation, write a section starting with "# " on its own line
 
-Return ONLY valid JSON:
-\`\`\`json
-{
-  "issues": [
-    {
-      "file": "path/to/file.ts",
-      "line": "42",
-      "severity": "error",
-      "rule": "short rule name",
-      "description": "what is wrong (1 sentence)"
-    }
-  ]
-}
+Suggested format for each section:
+\`\`\`markdown
+# [short rule name]: [brief description]
+
+- **File**: path/to/file.ts
+- **Line**: 42 (or 20-45 for a range)
+- **Severity**: error (or warning)
+- **Description**: what is wrong (1-2 sentences)
 \`\`\`
 
-The "line" field can be a single line ("42") or a range ("20-45").
+Use "error" severity for explicit violations of prohibitions or mandatory requirements.
+Use "warning" severity for violations of recommendations or potential issues.
 
-If there are no violations, return:
-
-\`\`\`json
-{"issues": []}
-\`\`\`
-
+Each issue must be a separate section. If there are no violations, respond with "No issues found."
 `;
+}
+
+export function parseFirstPassSections(text: string): string[] {
+  return text
+    .split(/^(?=# )/m)
+    .map((s) => s.trim())
+    .filter((s) => s.startsWith("# ") && s.length > 2);
 }
 
 export async function executeFirstPass(ruleFile: RuleFile, config: Config): Promise<FirstPassResult> {
   const prompt = buildFirstPassPrompt(ruleFile.content);
-  const response = await runAgentWithRetry(
+  const text = await runAgentWithRetry(
     config.agent,
     prompt,
     config.modelFast,
     ruleFile.dir,
-    FirstPassResponseSchema,
     config.verbose,
     config.maxRetries,
   );
-  return { ruleFile, issues: response.issues };
+  const sections = parseFirstPassSections(text);
+  return { ruleFile, sections };
 }

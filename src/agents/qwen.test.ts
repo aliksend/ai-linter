@@ -22,12 +22,12 @@ describe("QwenAgent", () => {
     expect(agent.buildArgs("my prompt", undefined)).toEqual(["my prompt", "--output-format", "json"]);
   });
 
-  it("parses valid JSON result string", () => {
-    const stdout = JSON.stringify([{ foo: "bar" }, { result: '{"issues":[]}' }]);
-    expect(agent.getJsonResponse(stdout)).toEqual('{"issues":[]}');
+  it("returns plain text from last result field", () => {
+    const stdout = JSON.stringify([{ foo: "bar" }, { result: "some markdown response" }]);
+    expect(agent.getTextResponse(stdout)).toBe("some markdown response");
   });
 
   it("throws when result field is missing", () => {
-    expect(() => agent.getJsonResponse(JSON.stringify([]))).toThrow("missing 'result'");
+    expect(() => agent.getTextResponse(JSON.stringify([]))).toThrow("missing 'result'");
   });
 });

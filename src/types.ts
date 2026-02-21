@@ -13,29 +13,11 @@ export interface RuleFile {
   content: string;
 }
 
-export const RawIssue = z.object({
-  file: z.string(),
-  line: z.string(),
-  severity: z.enum(["error", "warning"]),
-  rule: z.string(),
-  description: z.string(),
-});
-export type RawIssue = z.infer<typeof RawIssue>;
-
 export interface FirstPassResult {
   ruleFile: RuleFile;
-  issues: RawIssue[];
+  /** Raw markdown sections from the first pass, one per potential issue */
+  sections: string[];
 }
-
-export const VerifiedIssue = z.object({
-  confirmed: z.literal(true),
-  severity: z.enum(["error", "warning"]),
-  file: z.string(),
-  line: z.string(),
-  rule: z.string(),
-  explanation: z.string(),
-});
-export type VerifiedIssue = z.infer<typeof VerifiedIssue>;
 
 export const Config = z.object({
   projectPath: z.string(),

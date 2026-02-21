@@ -1,9 +1,7 @@
-import { AgentAdapter, stripCodeFences } from "../agents.js";
+import { AgentAdapter } from "../agents.js";
 
 export class QwenAgent extends AgentAdapter {
   command = "qwen";
-  defaultFastModel = undefined;
-  defaultReviewModel = undefined;
 
   buildArgs(prompt: string, model: undefined | string): string[] {
     const args = [prompt, "--output-format", "json"];
@@ -13,21 +11,16 @@ export class QwenAgent extends AgentAdapter {
     return args;
   }
 
-  getJsonResponse(stdout: string): string {
-    let parsedRes = JSON.parse(stdout);
-    let parsed = parsedRes[parsedRes.length - 1];
-    let result = parsed?.result;
+  getTextResponse(stdout: string): string {
+    const parsedRes = JSON.parse(stdout);
+    const parsed = parsedRes[parsedRes.length - 1];
+    const result = parsed?.result;
     if (result == null) {
       throw new Error(`Agent response missing 'result' field: ${stdout}`);
     }
     if (typeof result !== "string") {
       throw new Error(`Unknown result type: ${typeof result} (${result})`);
     }
-
-    const fenceStart = result.indexOf("```");
-    if (fenceStart !== -1) {
-      result = result.slice(fenceStart + 3).replace(/^json/, "");
-    }
-    return stripCodeFences(result);
+    return result;
   }
 }

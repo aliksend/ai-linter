@@ -5,7 +5,7 @@ import { scanForRuleFiles } from "./scanner.js";
 import { executeFirstPass } from "./passes/first-pass.js";
 import { executeSecondPass } from "./passes/second-pass.js";
 import { generateReport } from "./report.js";
-import { AGENT_TYPES, AgentType, Config, RuleFile, type RawIssue, type VerifiedIssue } from "./types.js";
+import { AGENT_TYPES, AgentType, Config, RuleFile } from "./types.js";
 import type { AgentAdapter } from "./agents.js";
 import { ClaudeAgent } from "./agents/claude.js";
 import { QwenAgent } from "./agents/qwen.js";
@@ -99,16 +99,16 @@ program
         return executeFirstPass(rf, config);
       });
 
-      const allRawIssues: { issue: RawIssue; rf: RuleFile }[] = [];
+      const allSections: { section: string; rf: RuleFile }[] = [];
       for (const result of firstPassResults) {
-        for (const issue of result.issues) {
-          allRawIssues.push({ issue, rf: result.ruleFile });
+        for (const section of result.sections) {
+          allSections.push({ section, rf: result.ruleFile });
         }
       }
 
-      console.log(`First pass complete. Found ${allRawIssues.length} potential issue(s).`);
+      console.log(`First pass complete. Found ${allSections.length} potential issue(s).`);
 
-      if (allRawIssues.length === 0) {
+      if (allSections.length === 0) {
         console.log("No issues found. Code looks clean!");
         const report = generateReport([]);
         await writeFile(config.outputPath, report, "utf-8");
@@ -118,29 +118,24 @@ program
 
       // Step 3: Second pass — verify each issue
       console.log("Starting second pass (verification)...");
-      const verifiedIssues: VerifiedIssue[] = [];
 
-      const secondPassResults = await runWithConcurrency(allRawIssues, config.concurrency, async ({ issue, rf }) => {
-        console.log(`  Verifying [${issue.rule}]: ${issue.file}:${issue.line}`);
-        return executeSecondPass(rf, issue, config);
+      const secondPassResults = await runWithConcurrency(allSections, config.concurrency, async ({ section, rf }) => {
+        const title = section.split("\n")[0].replace(/^# /, "");
+        console.log(`  Verifying: ${title}`);
+        return executeSecondPass(rf, section, config);
       });
 
-      for (const result of secondPassResults) {
-        if (result !== null) {
-          verifiedIssues.push(result);
-        }
-      }
+      const confirmedSections = secondPassResults.filter((s): s is string => s !== null);
 
-      console.log(`Second pass complete. ${verifiedIssues.length} issue(s) confirmed.`);
+      console.log(`Second pass complete. ${confirmedSections.length} issue(s) confirmed.`);
 
       // Step 4: Generate report
-      const report = generateReport(verifiedIssues);
+      const report = generateReport(confirmedSections);
       await writeFile(config.outputPath, report, "utf-8");
       console.log(`Report saved to ${config.outputPath}`);
 
       // Step 5: Exit code
-      const hasErrors = verifiedIssues.some((i) => i.severity === "error");
-      process.exit(hasErrors ? 1 : 0);
+      process.exit(confirmedSections.length > 0 ? 1 : 0);
     } catch (err) {
       console.error("ai-linter error:", err);
       process.exit(2);
